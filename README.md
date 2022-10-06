@@ -154,7 +154,55 @@ SELECT customer_id, product_name, order_count
 FROM fav_item_cus
 WHERE rank = 1;
 ```
+#### 5.Which item was purchased first by the customer after they became a member?
+```sql
+WITH first_item_cte AS 
+(
+SELECT
+	t1.customer_id,
+    t2.product_name,
+    t1.order_date,
+    t3.join_date,
+    dense_rank () OVER (PARTITION BY t1.customer_id ORDER BY t1.order_date asc) as ranked
+FROM 
+	dannys_diner.sales t1
+    JOIN dannys_diner.menu t2 on (t1.product_id = t2.product_id)
+    JOIN dannys_diner.members t3 on (t1.customer_id = t3.customer_id)
+WHERE t1.order_date >= t3.join_date
+)
+SELECT * 
+FROM first_item_cte
+WHERE ranked = 1
+;
+```
+
+
+| customer_id | product_name | order_date               | join_date                | ranked |
+| ----------- | ------------ | ------------------------ | ------------------------ | ------ |
+| A           | curry        | 2021-01-07T00:00:00.000Z | 2021-01-07T00:00:00.000Z | 1      |
+| B           | sushi        | 2021-01-11T00:00:00.000Z | 2021-01-09T00:00:00.000Z | 1      |
+
 
 ---
-
+#### 6. Which item was purchased just before the customer became a member?
+```sql
+WITH prior_item_cte AS 
+(
+SELECT
+    t1.customer_id,
+    t2.product_name,
+    t1.order_date,
+    t3.join_date,
+   dense_rank () OVER (PARTITION BY t1.customer_id ORDER BY t1.order_date desc) as ranked
+FROM 
+    dannys_diner.sales t1
+     JOIN dannys_diner.menu t2 on (t1.product_id = t2.product_id)
+     JOIN dannys_diner.members t3 on (t1.customer_id = t3.customer_id)
+WHERE t1.order_date < t3.join_date
+ )
+SELECT * 
+FROM prior_item_cte
+WHERE ranked = 1
+;
+```
 
