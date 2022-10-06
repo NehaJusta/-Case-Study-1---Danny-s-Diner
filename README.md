@@ -118,6 +118,43 @@ GROUP BY customer_id, product_name;
 ```
 
 
+| customer | first_item_purchased |
+| -------- | -------------------- |
+| A        | curry                |
+| A        | sushi                |
+| B        | curry                |
+| C        | ramen                |
+
+---
+
+#### 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+```sql
+SELECT product_name, Count(s.product_id) AS most_purchased
+FROM dannys_diner.sales AS s
+JOIN dannys_diner.menu AS m
+ON s.product_id = m.product_id
+GROUP BY s.product_id, product_name
+ORDER BY most_purchased DESC
+LIMIT 1
+```
+#### 5. Which item was the most popular for each customer?
+```sql
+WITH fav_item_cus AS
+(
+   SELECT s.customer_id, m.product_name, COUNT(m.product_id) AS order_count,
+      DENSE_RANK() OVER(PARTITION BY s.customer_id
+      ORDER BY COUNT(s.customer_id) DESC) AS rank
+   FROM dannys_diner.menu AS m
+   JOIN dannys_diner.sales AS s
+      ON m.product_id = s.product_id
+   GROUP BY s.customer_id, m.product_name
+)
+
+SELECT customer_id, product_name, order_count
+FROM fav_item_cus
+WHERE rank = 1;
+```
+
 ---
 
 
