@@ -154,7 +154,7 @@ SELECT customer_id, product_name, order_count
 FROM fav_item_cus
 WHERE rank = 1;
 ```
-#### 5.Which item was purchased first by the customer after they became a member?
+#### 6.Which item was purchased first by the customer after they became a member?
 ```sql
 WITH first_item_cte AS 
 (
@@ -184,7 +184,7 @@ WHERE ranked = 1
 
 
 ---
-#### 6. Which item was purchased just before the customer became a member?
+#### 7. Which item was purchased just before the customer became a member?
 ```sql
 WITH prior_item_cte AS 
 (
@@ -211,5 +211,62 @@ WHERE ranked = 1
 | A           | sushi        | 2021-01-01T00:00:00.000Z | 2021-01-07T00:00:00.000Z | 1      |
 | A           | curry        | 2021-01-01T00:00:00.000Z | 2021-01-07T00:00:00.000Z | 1      |
 | B           | sushi        | 2021-01-04T00:00:00.000Z | 2021-01-09T00:00:00.000Z | 1      |
+
+#### 8. What is the total items and amount spent for each member before they became a member?
+```sql
+
+SELECT
+    t1.customer_id,
+    count(t1.product_id) as total_items,
+    SUM(t2.price) as amount_spent
+FROM 
+    dannys_diner.sales t1
+     JOIN dannys_diner.menu t2 on (t1.product_id = t2.product_id)
+     JOIN dannys_diner.members t3 on (t1.customer_id = t3.customer_id)
+WHERE t1.order_date < t3.join_date
+GROUP BY t1.customer_id
+ORDER BY t1.customer_id;
+```
+
+
+| customer_id | total_items | amount_spent |
+| ----------- | ----------- | ------------ |
+| A           | 2           | 25           |
+| B           | 3           | 40           |
+
+#### 9. If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?
+
+```sql
+WITH price_points_cte AS
+(
+SELECT 
+	*,
+    CASE
+    	WHEN t2.product_name = 'sushi' THEN t2.price * 20
+        ELSE t2.price * 10
+    END as points_earned
+FROM 
+	dannys_diner.menu t2
+)
+SELECT 
+	t1.customer_id,
+	sum(t2.points_earned)
+FROM
+	price_points_cte t2
+    JOIN dannys_diner.sales t1 on(t1.product_id = t2.product_id)
+GROUP BY
+	t1.customer_id
+ORDER BY 
+	2 desc
+;
+```
+
+| customer_id | sum |
+| ----------- | --- |
+| B           | 940 |
+| C           | 360 |
+| A           | 860 |
+
+
 
 
